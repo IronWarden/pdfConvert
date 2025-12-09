@@ -12,6 +12,8 @@
 #include <vector>
 #include <zip.h>
 
+void createContainerXML(const std::string &);
+
 int main(int argc, char *argv[]) {
     // PSEUDOCODE: Validate inputs
     if (argc < 3) {
@@ -92,10 +94,12 @@ int main(int argc, char *argv[]) {
 
     // Generate EPUB metadata:
     // - META-INF/container.xml: XML pointing to OEBPS/content.opf
+    createContainerXML("books");
+
     // - OEBPS/content.opf: Package with metadata (title, creator), manifest
     // (HTMLs and images), spine (chapter order)
-    // - OEBPS/toc.ncx: NCX with navMap for chapters
 
+    // - OEBPS/toc.ncx: NCX with navMap for chapters
     // Package into ZIP: Create ZIP with mimetype (uncompressed), then add
     // META-INF/container.xml, OEBPS/content.opf, OEBPS/toc.ncx, HTML files,
     // images, save as argv[2]
@@ -104,4 +108,17 @@ int main(int argc, char *argv[]) {
 
     delete document;
     return 0;
+}
+
+void createContainerXML(const std::string &path) {
+    pugi::xml_document doc;
+    auto container = doc.append_child("container");
+    container.append_attribute("version") = "1.0";
+    container.append_attribute("xmlns") =
+        "urn:oasis:names:tc:opendocument:xmlns:container";
+    auto rootfiles = container.append_child("rootfiles");
+    auto rootfile = rootfiles.append_child("rootfile");
+    rootfile.append_attribute("full-path") = "OEBPS/content.opf";
+    rootfile.append_attribute("media-type") = "application/oebps-package+xml";
+    doc.save_file((path + "/META-INF/container.xml").c_str());
 }
